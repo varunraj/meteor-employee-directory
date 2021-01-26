@@ -1,31 +1,40 @@
-import { Meteor } from 'meteor/meteor';
-import { LinksCollection } from '/imports/api/links';
+// All code here is executed only in server
 
-function insertLink({ title, url }) {
-  LinksCollection.insert({title, url, createdAt: new Date()});
-}
+import _ from 'lodash'
+import { Meteor } from 'meteor/meteor';
+import {Employees} from '../imports/collections/employees'
+import {image, helpers} from 'faker' // fake data
+
 
 Meteor.startup(() => {
-  // If the Links collection is empty, add some data.
-  if (LinksCollection.find().count() === 0) {
-    insertLink({
-      title: 'Do the Tutorial',
-      url: 'https://www.meteor.com/tutorials/react/creating-an-app'
-    });
+  
+  const numberRecords = Employees.find({}).count();
+  
+  console.log("records", numberRecords)
 
-    insertLink({
-      title: 'Follow the Guide',
-      url: 'http://guide.meteor.com'
-    });
+  if(!numberRecords){
 
-    insertLink({
-      title: 'Read the Docs',
-      url: 'https://docs.meteor.com'
-    });
+    //times will call cb n number times.
+    _.times(5000,()=>{
+        const {name, email, phone} = helpers.createCard();
+        Employees.insert({
+            name,
+            email,
+            phone,
+            avatar: image.avatar()
+        })
+      })
 
-    insertLink({
-      title: 'Discussions',
-      url: 'https://forums.meteor.com'
-    });
   }
+
+
+  // set publication of data here. clients will subscribe to pubs
+  // we also disabled auto publish using command 'meteor remove autopublish'
+
+  Meteor.publish('employees', function(per_page){
+    return Employees.find({}, { limit : per_page }); // this is cursor to data and not actual data
+  })
+
+
+
 });
